@@ -34,10 +34,25 @@ listChats.forEach(element => {
 });
 
 bot.createWatch("message", async (ctx) => {
-    if (!gemeniAi.chat) return;
+    try {
+      if (!gemeniAi.chat) return;
 
-    if (ctx.update.message.text && ctx.update.message.text.toLowerCase().startsWith("+")) {
+      if (ctx.update.message.text && ctx.update.message.text.toLowerCase().startsWith("+")) {
         const result = await gemeniAi.run(ctx.update.message.text.replace("+", ''));
-        ctx.reply(result.response)
+  
+          if (Number(result.response.length) >= 4090) {
+            let arrMessage = result.response.match(new RegExp('[\\s\\S]{1,' + +4000 + '}', 'g'));
+
+            await arrMessage.reduce(async (promis, message) => {
+              await promis;
+              await ctx.reply(message);
+              await new Promise(resolve => setTimeout(resolve, 100))
+            }, Promise.resolve())
+          } else {
+            ctx.reply(result.response)
+          }
+      }
+    } catch (error) {
+      ctx.reply(error)
     }
 })
